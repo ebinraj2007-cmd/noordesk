@@ -16,3 +16,7 @@ auth/
 instagram-connector/session.json
 instagram-connector/.venv/
 gmail-connector/
+
+# Claude Code / tooling artifacts
+.claude-flow/
+.claude/
