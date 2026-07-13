@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>NoorDesk — AI Front Desk</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%234f46e5'/%3E%3Cpath d='M32 11c1.7 11.6 8.9 18.8 20.5 20.5C40.9 33.2 33.7 40.4 32 52 30.3 40.4 23.1 33.2 11.5 31.5 23.1 29.8 30.3 22.6 32 11z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.72 5.4 4.6 9.28 10 10-5.4.72-9.28 4.6-10 10-.72-5.4-4.6-9.28-10-10 5.4-.72 9.28-4.6 10-10z"/></svg>
+        </span>
+        <div class="brand-text">
+          <h1>NoorDesk</h1>
+          <p class="tag">Multilingual AI front desk · local-first</p>
+        </div>
+      </div>
+
+      <div class="topbar-side">
+        <span id="conn" class="conn wait" role="status" aria-live="polite" title="Connection to the local NoorDesk server">
+          <span class="dot" aria-hidden="true"></span><span id="conn-label">Connecting</span>
+        </span>
+
+        <span id="engine" class="pill" title="Engine drafting the suggested replies">
+          <span class="ico ico-cpu" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg></span>
+          <span class="ico ico-ai" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg></span>
+          <span id="engine-label">Rule engine</span>
+        </span>
+
+        <span class="vsep" aria-hidden="true"></span>
+
+        <button id="analytics-open" class="btn iconbtn" type="button" title="Analytics" aria-label="Toggle analytics">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+        </button>
+
+        <button id="setup-open" class="btn iconbtn" type="button" title="Setup / your role" aria-label="Open setup">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        </button>
+
+        <button id="theme" class="btn iconbtn" type="button" title="Theme: auto" aria-label="Switch color theme">
+          <span class="ico ico-auto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg></span>
+          <span class="ico ico-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span>
+          <span class="ico ico-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
+        </button>
+
+        <button id="clear" class="btn ghost" type="button">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+          Clear Queue
+        </button>
+
+        <button id="run" class="btn primary" type="button">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg></span>
+          <span id="run-label">Run Triage</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="stats" class="stats" aria-label="Queue statistics"></section>
+
+    <nav id="portals" class="portals" aria-label="Channel portals"></nav>
+
+    <div id="searchbar" class="searchbar hide">
+      <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+      <input id="search" type="search" placeholder="Search messages, senders…" aria-label="Search">
+    </div>
+
+    <section id="analytics" class="analytics hide" aria-label="Analytics"></section>
+
+    <div id="queue-head" class="queue-head hide">
+      <h2>Message queue</h2>
+      <span id="queue-count" class="qcount"></span>
+      <span class="live-hint" title="The queue polls the server every 5 seconds">auto-refresh · 5s</span>
+    </div>
+
+    <section id="queue" class="queue" aria-label="Message queue"></section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="foot-left">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        Local-first — runs on 127.0.0.1, messages never leave this machine
+      </span>
+      <span id="engine-note">Rule engine (offline). Run Ollama to enable the local AI.</span>
+    </div>
+  </footer>
+
+  <div id="setup" class="modal-overlay hide" role="dialog" aria-modal="true" aria-labelledby="setup-title">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="setup-title">What are you using NoorDesk for?</h2>
+        <p>Pick your role so replies fit you. You can change this anytime from the gear icon.</p>
+      </div>
+
+      <div class="section-label">Choose your role</div>
+      <div id="role-grid" class="role-grid" role="listbox" aria-label="Role"></div>
+
+      <div id="fields-business" class="fields hide">
+        <label>Business name<input id="f-name-biz" type="text" placeholder="e.g. Best Pick Mart"></label>
+        <label>What you offer<input id="f-sells" type="text" placeholder="e.g. electronics & home appliances"></label>
+        <div class="field-row">
+          <label>Opening hours<input id="f-hours" type="text" placeholder="e.g. Sun–Thu, 9am–7pm"></label>
+          <label>Phone<input id="f-phone" type="text" placeholder="e.g. +971 4 000 0000"></label>
+        </div>
+        <label>Location <span class="opt">(optional)</span><input id="f-location" type="text" placeholder="e.g. Business Bay, Dubai"></label>
+
+        <div class="products">
+          <div class="products-head">
+            <span>Products &amp; prices <span class="opt">(optional — the AI quotes these when asked)</span></span>
+            <button id="prod-add" class="btn sm" type="button">+ Add item</button>
+          </div>
+          <div id="prod-list"></div>
+        </div>
+
+        <div class="products">
+          <div class="products-head">
+            <span>FAQ answers <span class="opt">(optional — answered word-for-word)</span></span>
+            <button id="faq-add" class="btn sm" type="button">+ Add Q&amp;A</button>
+          </div>
+          <div id="faq-list"></div>
+        </div>
+
+        <label class="away-row">
+          <input id="f-away" type="checkbox">
+          <span>Auto-add an "we're closed" note outside opening hours</span>
+        </label>
+        <div class="field-row" id="away-times">
+          <label>Opens<input id="f-open" type="time" value="09:00"></label>
+          <label>Closes<input id="f-close" type="time" value="18:00"></label>
+        </div>
+
+        <label>VIP senders <span class="opt">(optional — one email/number per line, prioritised)</span>
+          <textarea id="f-vip" rows="2" placeholder="boss@corp.com&#10;+9715..."></textarea>
+        </label>
+      </div>
+
+      <div id="fields-personal" class="fields hide">
+        <label>Your name <span class="opt">(optional)</span><input id="f-name-me" type="text" placeholder="e.g. Ebin"></label>
+      </div>
+
+      <div id="fields-tone" class="fields hide">
+        <label>Reply tone
+          <select id="f-tone">
+            <option value="friendly">Friendly</option>
+            <option value="formal">Formal</option>
+            <option value="brief">Short &amp; brief</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-foot">
+        <button id="setup-later" class="btn ghost" type="button">Later</button>
+        <button id="setup-save" class="btn primary" type="button" disabled>Save &amp; start</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

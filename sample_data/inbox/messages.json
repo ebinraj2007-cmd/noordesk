@@ -1,0 +1,46 @@
+[
+  { "id": "m01", "sender": "aisha@example.com", "channel": "email",
+    "raw_text": "Hi, I'd like to book an appointment for next Tuesday afternoon." },
+
+  { "id": "m02", "sender": "+971500000002", "channel": "whatsapp",
+    "raw_text": "خدمة سيئة جدا! انتظرت ساعة كاملة ولم يرد أحد. أريد استرجاع أموالي." },
+
+  { "id": "m03", "sender": "+971500000003", "channel": "whatsapp",
+    "raw_text": "നിങ്ങളുടെ സേവനത്തിന്റെ വില എത്രയാണ്?" },
+
+  { "id": "m04", "sender": "rajesh@example.com", "channel": "email",
+    "raw_text": "உங்கள் இணையதளம் வேலை செய்யவில்லை, எனக்கு உதவி தேவை." },
+
+  { "id": "m05", "sender": "pierre@example.com", "channel": "email",
+    "raw_text": "Bonjour, je voudrais réserver une table pour deux personnes ce soir." },
+
+  { "id": "m06", "sender": "john@example.com", "channel": "email",
+    "raw_text": "This is not an emergency, but my order arrived late and I'm a bit disappointed." },
+
+  { "id": "m07", "sender": "promo@spammy.biz", "channel": "email",
+    "raw_text": "CONGRATULATIONS YOU WON a free prize! Click here to claim your lottery bitcoin now!" },
+
+  { "id": "m08", "sender": "+971500000008", "channel": "whatsapp",
+    "raw_text": "مرحبا، أريد حجز موعد يوم الخميس صباحا." },
+
+  { "id": "m09", "sender": "marie@example.com", "channel": "email",
+    "raw_text": "Bonjour, combien coûte une consultation ?" },
+
+  { "id": "m10", "sender": "sam@example.com", "channel": "email",
+    "raw_text": "URGENT: the system is completely down and I need help immediately!" },
+
+  { "id": "m11", "sender": "+971500000011", "channel": "whatsapp",
+    "raw_text": "എനിക്ക് നാളെ ഒരു അപ്പോയിന്റ്മെന്റ് വേണം." },
+
+  { "id": "m12", "sender": "+971500000012", "channel": "whatsapp",
+    "raw_text": "மிகவும் மோசமான சேவை, நான் மிகவும் கோபமாக இருக்கிறேன்." },
+
+  { "id": "m13", "sender": "unknown@example.com", "channel": "email",
+    "raw_text": "Hello?" },
+
+  { "id": "m14", "sender": "luc@example.com", "channel": "email",
+    "raw_text": "Ce n'est pas urgent, mais le lien de paiement ne marche pas." },
+
+  { "id": "m15", "sender": "fatima@example.com", "channel": "email",
+    "raw_text": "Do you have parking available near your location?" }
+]

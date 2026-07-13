@@ -1,0 +1,13 @@
+{
+  "name": "noordesk-whatsapp-bridge",
+  "version": "1.0.0",
+  "description": "Local WhatsApp bridge for NoorDesk (Baileys, QR login).",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "qrcode-terminal": "^0.12.0",
+    "pino": "^9.5.0"
+  }
+}
