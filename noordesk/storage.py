@@ -41,6 +41,16 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 """
 
+# Indexes on the columns the dashboard actually filters/sorts by (checklist #7).
+# get_all() orders by (needs_review, priority, created_at); set_status filters by
+# id (already the PRIMARY KEY). status is filtered in the UI. Targeted only -
+# over-indexing would slow every insert for no read benefit.
+INDEXES = [
+    "CREATE INDEX IF NOT EXISTS idx_messages_sort ON messages(needs_review DESC, priority DESC, created_at DESC);",
+    "CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);",
+    "CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender);",
+]
+
 COLUMNS = [
     "id", "sender", "channel", "raw_text", "detected_language", "language_confidence",
     "intent", "priority", "sentiment", "suggested_reply", "translation",
@@ -72,6 +82,8 @@ def init_db(db_path: Optional[str] = None) -> None:
         for col, coltype in _COL_TYPES.items():
             if col not in existing:
                 conn.execute(f"ALTER TABLE messages ADD COLUMN {col} {coltype}")
+        for ddl in INDEXES:
+            conn.execute(ddl)
 
 
 def save_messages(records: List[Dict], db_path: Optional[str] = None) -> int:
