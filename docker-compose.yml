@@ -1,0 +1,52 @@
+# NoorDesk in a container.
+#
+#   docker compose up --build
+#   open http://127.0.0.1:8000
+#
+# Note the port binding: 127.0.0.1:8000, not 8000. Written the short way, Docker
+# publishes on 0.0.0.0 and — on many setups — punches straight through the host
+# firewall, putting the dashboard on your local network. NoorDesk is designed to
+# be single-operator and local; the binding should say so.
+
+services:
+  noordesk:
+    build: .
+    image: noordesk:local
+    container_name: noordesk
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8000:8000"
+
+    environment:
+      # Set this before exposing NoorDesk anywhere. Without it the app runs in
+      # trusted-local mode and warns at startup.
+      NOORDESK_TOKEN: "${NOORDESK_TOKEN:-}"
+      NOORDESK_ORIGINS: "${NOORDESK_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}"
+      NOORDESK_LOG_LEVEL: "${NOORDESK_LOG_LEVEL:-INFO}"
+      # Optional: only needed if you enable the cloud AI engine.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+
+    # Named volume, not a bind mount: the database is the container's own state
+    # and shouldn't depend on a host path existing with the right permissions.
+    volumes:
+      - noordesk-data:/data
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+    # Defence in depth. The app never writes outside /data, so the rest of the
+    # filesystem can be read-only — which removes the easy path from "I can run
+    # code" to "I can persist".
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  noordesk-data:
