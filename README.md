@@ -112,3 +112,93 @@ MIT — see [LICENSE](LICENSE).
 <div align="center">
 <sub>Built by Ebin Raj · runs on your machine · your data stays yours</sub>
 </div>
+# Paste this into the NoorDesk README
+
+---
+
+## Live updates: polling, then WebSockets
+
+The dashboard originally polled `/api/messages` and `/api/stats` every five
+seconds. It now holds a WebSocket and refreshes the moment something changes,
+with the poll kept as a fallback. Both paths are in the codebase on purpose.
+
+### The numbers
+
+| | Short polling | WebSocket |
+|---|---|---|
+| Requests per idle hour, one dashboard | 720 | 0 |
+| Time to see a new message | 0–5s, average 2.5s | ~50ms |
+| Server work when nothing happens | 720 queries, 720 responses | one idle socket |
+| Recovery from a dropped connection | automatic, next tick | reconnect with backoff |
+| Behind a proxy that strips `Upgrade` | works | fails |
+| Load balancer with round-robin | works | needs sticky sessions |
+
+### Why keep both
+
+Polling is not the naive option. It is stateless, it survives anything, and a
+dropped request costs five seconds and nothing else. For a tool that might be
+running on a shop's wifi or over a hotel connection, that matters.
+
+WebSockets remove the 2.5-second average latency and the 720 pointless requests
+an hour, at the cost of a connection that has to be maintained, authenticated,
+and given up on gracefully.
+
+So the socket is the fast path and the poll is the safety net. The poll only
+runs while the socket is down — never both at once — and the indicator in the
+header shows which is active.
+
+### Design decisions worth naming
+
+**The socket carries hints, not data.** A broadcast says `{"type":"messages",
+"reason":"ingest"}` and nothing more. The dashboard then re-fetches through the
+existing REST endpoints, which already have authentication, rate limiting and
+validation. Pushing message content down the socket would mean duplicating all
+of that on a second path — and customer messages are exactly the data NoorDesk
+exists to keep on the operator's own machine. One authenticated read path is
+easier to secure than two. A test asserts the payload never grows message
+fields, so this can't erode by accident.
+
+**Publishing is safe from synchronous code.** Every endpoint is a plain `def`,
+so FastAPI runs it in a worker thread, where touching an asyncio object is a
+data race. `hub.publish()` hands the work to the event loop via
+`call_soon_threadsafe`, and does nothing at all if no loop is bound. It also
+swallows every exception: a dashboard missing a nudge is cosmetic, an API call
+failing because a browser tab closed is not.
+
+**Slow clients get dropped, not queued.** Each connection has a bounded queue of
+8. A laptop that slept mid-session must not be able to grow the server's memory.
+When a queue fills, the oldest hint is discarded — hints are idempotent, so
+"something changed" twice means the same as once.
+
+**Auth is in the first frame, not the URL.** A token in a query string ends up
+in every access log and proxy trace on the way. The client sends it as the
+opening message instead, and a connection that fails to authenticate within five
+seconds is closed. The comparison is constant-time, so the socket can't be used
+to guess the token a byte at a time.
+
+**Reconnection backs off exponentially**, capped at 30 seconds, so a server
+restart doesn't get hammered by every open dashboard simultaneously.
+
+### Known limits
+
+- **One process only.** The hub lives in memory. Running NoorDesk under multiple
+  workers would need Redis pub/sub or similar; NoorDesk is single-operator by
+  design, so that isn't built.
+- **Needs `uvicorn[standard]`** for WebSocket support. Plain `uvicorn` will
+  serve the app but the socket will never open — and the dashboard will quietly
+  fall back to polling, which is the intended behaviour.
+
+### Trying it
+
+```bash
+pip install 'uvicorn[standard]'
+python -m pytest tests/test_live.py -q     # 14 tests
+uvicorn webapp.main:app --reload
+```
+
+Open two browser tabs. Act in one; the other updates immediately. Then stop the
+server — the header switches back to `auto-refresh · 5s` and the dashboard keeps
+working.
+
+`GET /api/live/stats` reports connected clients, events published, and events
+dropped to slow consumers.
