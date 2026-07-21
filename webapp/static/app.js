@@ -584,10 +584,83 @@ load();
 // Pauses briefly while you're interacting so it doesn't fight your clicks.
 let lastAction = 0;
 document.addEventListener("click", () => { lastAction = Date.now(); });
-setInterval(() => {
+
+// ---------- live updates ----------
+// Two transports, one behaviour. The WebSocket pushes a hint the moment
+// anything changes; the 5s poll is kept as a fallback for anywhere the socket
+// can't be established (a proxy that strips Upgrade, an old browser, a captive
+// portal). The poll only runs while the socket is down, so we never do both.
+
+const LIVE = {
+  socket: null,
+  connected: false,
+  attempts: 0,
+  timer: null,
+};
+
+function pollTick() {
   if (busy || document.hidden) return;
+  if (LIVE.connected) return;              // socket is doing the work
   if (Date.now() - lastAction > 3000) load();
-}, 5000);
+}
+LIVE.timer = setInterval(pollTick, 5000);
+
+function liveConnect() {
+  if (!("WebSocket" in window)) return;    // fallback keeps running
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  let ws;
+  try {
+    ws = new WebSocket(proto + "//" + location.host + "/ws");
+  } catch (e) {
+    return;                                // fallback keeps running
+  }
+  LIVE.socket = ws;
+
+  ws.onopen = () => {
+    // Auth travels in the first frame, not the URL, so it stays out of logs.
+    ws.send(JSON.stringify({ token: window.NOORDESK_TOKEN || "" }));
+  };
+
+  ws.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+
+    if (msg.type === "ready") {
+      LIVE.connected = true;
+      LIVE.attempts = 0;
+      setLive(true);
+      return;
+    }
+    if (msg.type === "ping") return;        // keepalive only
+
+    // A hint, not data: re-fetch through the authenticated REST endpoints.
+    if (msg.type === "messages" && !busy) load(true);
+  };
+
+  const drop = () => {
+    if (LIVE.connected) setLive(false);
+    LIVE.connected = false;
+    LIVE.socket = null;
+    // Exponential backoff with a ceiling, so a server restart doesn't get
+    // hammered by every open dashboard at once.
+    const wait = Math.min(30000, 1000 * Math.pow(2, LIVE.attempts++));
+    setTimeout(liveConnect, wait);
+  };
+  ws.onclose = drop;
+  ws.onerror = () => { try { ws.close(); } catch {} };
+}
+
+function setLive(on) {
+  const el = document.querySelector(".live-hint");
+  if (!el) return;
+  el.textContent = on ? "live" : "auto-refresh · 5s";
+  el.title = on
+    ? "Connected. Updates arrive the moment they happen."
+    : "The live connection is down; falling back to polling every 5 seconds.";
+  el.classList.toggle("is-live", on);
+}
+
+liveConnect();
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && !busy) load();
 });

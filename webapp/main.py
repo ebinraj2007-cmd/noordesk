@@ -15,6 +15,7 @@ API. Hardened against the standard pre-deployment checklist:
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -23,7 +24,7 @@ from collections import Counter
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends, Request, HTTPException
+from fastapi import FastAPI, Depends, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,6 +34,7 @@ from noordesk.ingest import load_from_folder
 from noordesk.pipeline import process_inbox
 from noordesk import storage, profile as profiles, SUPPORTED_LANGUAGES
 from webapp.security import require_token, rate_check, safe_inbox_path, token_configured
+from webapp.live import hub, check_auth, AUTH_TIMEOUT, PING_INTERVAL
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -50,6 +52,9 @@ async def lifespan(app: FastAPI):
     if not token_configured():
         log.warning("NOORDESK_TOKEN not set - running in trusted local mode; "
                     "set it before exposing NoorDesk beyond 127.0.0.1")
+    # Endpoints run in worker threads and cannot touch asyncio objects directly.
+    # Handing the hub a reference to this loop is what makes publish() safe.
+    hub.bind_loop(asyncio.get_running_loop())
     yield
 
 
@@ -129,6 +134,7 @@ def api_run(req: RunRequest):
                             threshold=req.threshold, use_llm=req.use_llm)
     _apply_repeat(records)
     storage.save_messages(records)
+    hub.publish("messages", reason="run", count=len(records))
     return JSONResponse({"processed": len(records)})
 
 
@@ -164,6 +170,7 @@ def api_ingest(msg: IngestMessage):
     records = process_inbox([msg.model_dump()], profile=profiles.load())
     _apply_repeat(records)
     storage.save_messages(records)
+    hub.publish("messages", reason="ingest", id=msg.id)
     return JSONResponse({"ok": True, "id": msg.id})
 
 
@@ -211,6 +218,7 @@ class SendRequest(BaseModel):
 @app.post("/api/send", dependencies=[Depends(require_token)])
 def api_send(req: SendRequest):
     storage.set_status(req.id, "sent")
+    hub.publish("messages", reason="send", id=req.id)
     return JSONResponse({"ok": True, "id": req.id})
 
 
@@ -223,13 +231,65 @@ class MarkRequest(BaseModel):
 def api_mark(req: MarkRequest):
     status = req.status if req.status in ("new", "sent", "done", "snoozed") else "done"
     storage.set_status(req.id, status)
+    hub.publish("messages", reason="mark", id=req.id)
     return JSONResponse({"ok": True, "id": req.id, "status": status})
 
 
 @app.post("/api/clear", dependencies=[Depends(require_token)])
 def api_clear():
     storage.clear()
+    hub.publish("messages", reason="clear")
     return JSONResponse({"ok": True})
+
+
+
+# ---- live updates (WebSocket) ---------------------------------------------
+# The socket is a notification channel, not a data channel: it says "something
+# changed" and the dashboard re-fetches over the authenticated REST endpoints.
+# Keeping message content on one read path means one place to secure, and no
+# customer data crossing a second channel.
+@app.websocket("/ws")
+async def ws_live(ws: WebSocket):
+    await ws.accept()
+
+    # Authenticate on the first frame rather than the URL, so the token never
+    # lands in an access log or proxy trace.
+    try:
+        opening = await asyncio.wait_for(ws.receive_text(), timeout=AUTH_TIMEOUT)
+    except (asyncio.TimeoutError, WebSocketDisconnect):
+        await ws.close(code=1008)
+        return
+
+    if not check_auth(opening):
+        log.warning("ws auth rejected")
+        await ws.close(code=1008)
+        return
+
+    q = hub.register()
+    await ws.send_json({"type": "ready", "clients": hub.clients})
+
+    try:
+        while True:
+            try:
+                event = await asyncio.wait_for(q.get(), timeout=PING_INTERVAL)
+            except asyncio.TimeoutError:
+                # Idle. Ping so proxies keep the connection and we notice a peer
+                # that has silently gone away.
+                await ws.send_json({"type": "ping"})
+                continue
+            await ws.send_json(event)
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        log.exception("ws send failed")
+    finally:
+        hub.unregister(q)
+
+
+@app.get("/api/live/stats")
+def api_live_stats():
+    """How many dashboards are connected, and how the hub is coping."""
+    return JSONResponse(hub.stats)
 
 
 # Static dashboard (mounted last so /api routes take precedence).
