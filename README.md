@@ -201,3 +201,13 @@ dropped to slow consumers.
 <div align="center">
 <sub>Built by Ebin Raj · runs on your machine · your data stays yours</sub>
 </div>
+
+## Running in Docker
+
+```bash
+docker compose up --build
+# http://127.0.0.1:8000
+```
+
+Multi-stage build, non-root user, healthcheck against `/healthz`, SQLite on a named
+volume so data survives the container being replaced.
