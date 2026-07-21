@@ -109,13 +109,6 @@ fallback path — all offline, no key needed.
 
 MIT — see [LICENSE](LICENSE).
 
-<div align="center">
-<sub>Built by Ebin Raj · runs on your machine · your data stays yours</sub>
-</div>
-# Paste this into the NoorDesk README
-
----
-
 ## Live updates: polling, then WebSockets
 
 The dashboard originally polled `/api/messages` and `/api/stats` every five
@@ -202,3 +195,9 @@ working.
 
 `GET /api/live/stats` reports connected clients, events published, and events
 dropped to slow consumers.
+
+---
+
+<div align="center">
+<sub>Built by Ebin Raj · runs on your machine · your data stays yours</sub>
+</div>
